@@ -93,12 +93,30 @@
         "type": "github"
       }
     },
+    "nvm": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1745451271,
+        "narHash": "sha256-s36EQojnNKm4x410nllC3nbnzzwcLZCKSP3DkJPpjjo=",
+        "owner": "nvm-sh",
+        "repo": "nvm",
+        "rev": "977563e97ddc66facf3a8e31c6cff01d236f09bd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nvm-sh",
+        "ref": "v0.40.3",
+        "repo": "nvm",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nvm": "nvm"
       }
     }
   },

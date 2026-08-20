@@ -1,4 +1,4 @@
-{ config, pkgs, user, ... }:
+{ config, pkgs, user, nvmSource, ... }:
 
 let
   dotfiles = "${config.home.homeDirectory}/.dotfiles";
@@ -16,6 +16,8 @@ in
     jq        # json on the command line
     lazygit
     neovim
+    # Keep python3 current instead of falling back to macOS's Python 3.9.
+    python314
     # External tools used by the Kickstart-based Neovim configuration.
     tree-sitter
     lua-language-server
@@ -46,6 +48,13 @@ in
       # Fast local shell tweaks do not require a full darwin-rebuild.
       if [[ -f "$HOME/.zshrc.local" ]]; then
         source "$HOME/.zshrc.local"
+      fi
+
+      # NVM itself is pinned by this flake. Node versions and aliases stay in
+      # ~/.nvm, where `nvm install` and `nvm alias` expect to manage them.
+      export NVM_DIR="$HOME/.nvm"
+      if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+        source "$NVM_DIR/nvm.sh"
       fi
     '';
     shellAliases = {
@@ -78,6 +87,14 @@ in
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/wezterm";
   home.file.".zshrc.local".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.zshrc.local";
+  home.file.".nvm/nvm.sh" = {
+    source = "${nvmSource}/nvm.sh";
+    force = true;
+  };
+  home.file.".nvm/nvm-exec" = {
+    source = "${nvmSource}/nvm-exec";
+    force = true;
+  };
   home.file.".config/nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/nvim";
   home.file.".config/herdr".source =

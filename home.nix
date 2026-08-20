@@ -16,10 +16,17 @@ in
     jq        # json on the command line
     lazygit
     neovim
+    # External tools used by the Kickstart-based Neovim configuration.
+    tree-sitter
+    lua-language-server
+    stylua
+    nil
+    nixfmt
     # the font everything renders in
     nerd-fonts.hack
   ];
   fonts.fontconfig.enable = true;
+  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
   home.sessionVariables.EDITOR = "nvim";
 
   programs.zsh = {
@@ -28,6 +35,18 @@ in
     syntaxHighlighting.enable = true;  # commands turn green when valid
     initContent = ''
       bindkey '^f' autosuggest-accept
+
+      # macOS Terminal sends these for Shift+arrow. Keep them out of the
+      # command line when a terminal profile does not define them itself.
+      bindkey $'\e[1;2A' up-line
+      bindkey $'\e[1;2B' down-line
+      bindkey $'\e[1;2C' forward-char
+      bindkey $'\e[1;2D' backward-char
+
+      # Fast local shell tweaks do not require a full darwin-rebuild.
+      if [[ -f "$HOME/.zshrc.local" ]]; then
+        source "$HOME/.zshrc.local"
+      fi
     '';
     shellAliases = {
       ".." = "cd ..";
@@ -36,7 +55,7 @@ in
       pull = "git pull";
       m = "git switch main";
       cc = "claude --dangerously-skip-permissions";
-      co = "codex --full-auto";
+      co = "codex --yolo";
     };
   };
 
@@ -46,9 +65,10 @@ in
       add_newline = false;
       format = "$directory$git_branch$git_status$cmd_duration$line_break$character";
       character = {
-        success_symbol = "[❯](purple)";
-        error_symbol = "[❯](red)";
+        success_symbol = ">";
+        error_symbol = "!";
       };
+      git_branch.symbol = "git:";
       cmd_duration.format = "[$duration]($style) ";
     };
   };
@@ -56,6 +76,8 @@ in
   # Edit-in-place: the real file stays in my repo, ~/.config just points at it.
   home.file.".config/wezterm".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/wezterm";
+  home.file.".zshrc.local".source =
+    config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.zshrc.local";
   home.file.".config/nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${dotfiles}/home/.config/nvim";
   home.file.".config/herdr".source =

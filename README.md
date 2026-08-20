@@ -17,9 +17,9 @@ Running the switch builds:
 
 - System settings (dark mode, key repeat, dock, Finder, trackpad)
 - Homebrew apps (casks and CLI tools)
-- Nix user packages (ripgrep, fd, fzf, jq, lazygit, Neovim, Hack Nerd Font)
+- Nix user packages (CLI tools, Neovim, the Kickstart editor toolchain, Hack Nerd Font)
 - Shell (zsh, aliases, starship prompt)
-- Editor (Neovim config with the rose-pine moon theme)
+- Editor (Kickstart-based Neovim config with the rose-pine moon theme)
 - Terminal (WezTerm config with the rose-pine moon theme and dimmed unfocused windows)
 - Agent configs (Claude, Codex, opencode all share one AGENTS.md)
 - Optional Pi theme and local extensions, generic UI settings and model overrides, plus two deliberately pinned third-party Pi packages
@@ -49,12 +49,14 @@ Change the host label or CPU architecture if needed, and read the Homebrew clean
 
 `bootstrap.sh` does four things, in order:
 
-1. Installs Determinate Nix, if it isn't already installed.
+1. Installs Nix, if it isn't already installed. Apple Silicon uses Determinate Nix;
+   Intel Macs use the upstream Nix installer because Determinate no longer ships
+   an Intel macOS installer.
 2. Symlinks this repo to `~/.dotfiles`.
    This has to happen before the first build, because `home.nix` points at config files through `~/.dotfiles`.
 3. Checks the `user` configured in `flake.nix` against your actual macOS username, and offers to fix it for you if they differ.
 4. Runs the first `darwin-rebuild switch`.
-   It fetches the `darwin-rebuild` tool from the nix-darwin 26.05 release branch, then applies this repo's locked flake config.
+   It preserves existing files that Home Manager will manage, fetches the `darwin-rebuild` tool from the nix-darwin 26.05 release branch, then applies this repo's locked flake config.
 
 After that, `darwin-rebuild` exists and you're on the normal workflow below.
 
@@ -63,8 +65,9 @@ After that, `darwin-rebuild` exists and you're on the normal workflow below.
 Once Nix is installed (`bootstrap.sh` step 1 handles that), you can check that the config builds without touching your system - handy when you have edited something:
 
 ```sh
-nix flake check --no-build
-nix build .#darwinConfigurations.mac.system --dry-run
+nix --extra-experimental-features 'nix-command flakes' flake check --no-build
+nix --extra-experimental-features 'nix-command flakes' \
+  build .#darwinConfigurations.mac.system --dry-run
 ```
 
 If you renamed the host label in "Make it yours", substitute your label for `mac` in these commands.
@@ -79,6 +82,13 @@ Edit the config files in place, then apply:
 
 That's it.
 No separate build-and-copy step.
+
+For quick aliases and shell tweaks, edit `home/.zshrc.local` instead.
+It is linked directly into `~/.zshrc.local`, so changes take effect in a new shell or after `source ~/.zshrc.local` without a rebuild.
+The declarative aliases in `home.nix` remain the place for stable settings you want Home Manager to own.
+
+Homebrew does not auto-update during a switch, so rebuilds stay quick.
+Run `brew update` manually when you want to refresh Homebrew metadata.
 
 ## Make it yours
 
@@ -113,6 +123,9 @@ Read through `brews` and `casks` before you run `bootstrap.sh` or `rebuild.sh` f
 **About `herdr`:** it's in the `brews` list.
 It's a real public Homebrew formula (`brew info herdr` finds it in homebrew-core, no tap needed), so it will install fine.
 If you don't use it, just remove it from `brews` in your copy.
+
+This configuration also keeps `openvpn` and `hashicorp/tap/terraform` installed.
+The latter is declared with an explicitly trusted tap because current Homebrew versions require trust for third-party formulae.
 
 **Heads-up:**
 
@@ -174,8 +187,9 @@ Home Manager deliberately does not manage `~/.pi/agent` itself, or Pi authentica
 
 ## Notes
 
-The first time you launch `nvim`, it bootstraps [lazy.nvim](https://github.com/folke/lazy.nvim) by cloning plugins from GitHub.
-That needs network access once; after that it's offline.
+The first time you launch `nvim`, Kickstart's built-in `vim.pack` fetches the plugins from GitHub.
+That needs network access once; after that the plugin sources and lockfile live in the Neovim config and data directories.
+Home Manager supplies the Tree-sitter CLI, Lua and Nix language servers, and Lua and Nix formatters used by the config.
 Neovim and WezTerm both use the rose-pine moon theme.
 Neovim keeps italics off and uses a transparent background on macOS, Windows, and WSL so it matches the terminal setup.
 

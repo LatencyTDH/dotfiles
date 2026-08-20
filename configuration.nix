@@ -1,11 +1,11 @@
 { user, ... }:
 
 {
-  # Determinate already manages the Nix daemon, so nix-darwin shouldn't.
+  # The Nix installer manages the daemon, so nix-darwin shouldn't.
   nix.enable = false;
 
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.hostPlatform = "aarch64-darwin"; # use x86_64-darwin for Intel CPU
+  nixpkgs.hostPlatform = "x86_64-darwin"; # use x86_64-darwin for Intel CPU
 
   system.primaryUser = user;
   users.users.${user} = {
@@ -27,15 +27,21 @@
   };
   nix-homebrew = {
     enable = true;
+    autoMigrate = true; # take over an existing Intel Homebrew installation
     inherit user;
   };
   homebrew = {
     enable = true;
     onActivation.cleanup = "zap";  # remove anything not listed here
-    onActivation.autoUpdate = true;
+    onActivation.autoUpdate = false; # keep rebuilds fast; run `brew update` manually
     onActivation.extraFlags = [ "--force" ];
+    taps = [
+      { name = "hashicorp/tap"; trusted = true; }
+    ];
     brews = [
       "herdr"
+      "openvpn"
+      { name = "hashicorp/tap/terraform"; trusted = true; }
     ];
     casks = [
       "wezterm"

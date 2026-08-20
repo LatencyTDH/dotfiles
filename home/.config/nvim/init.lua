@@ -398,6 +398,7 @@ do
   --
   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
   -- Rosé Pine Moon matches the rest of the Home Manager desktop theme.
+  local use_ansi_palette = vim.env.TERM_PROGRAM == 'Apple_Terminal'
   vim.pack.add { gh 'rose-pine/neovim' }
   require('rose-pine').setup {
     dark_variant = 'moon',
@@ -405,12 +406,15 @@ do
     extend_background_behind_borders = false,
     styles = {
       italic = false,
-      transparency = vim.uv.os_uname().sysname == 'Darwin'
-        or string.find(vim.uv.os_uname().sysname, 'Windows') ~= nil
-        or string.find(vim.uv.os_uname().release, 'WSL') ~= nil,
+      transparency = false,
     },
   }
   vim.cmd.colorscheme 'rose-pine'
+
+  -- Apple Terminal does not render RGB SGR escape sequences correctly. Use
+  -- Rosé Pine's matching ANSI palette there, while keeping truecolor for
+  -- terminals that support it.
+  if use_ansi_palette then vim.o.termguicolors = false end
 
   local palette = require 'rose-pine.palette'
   vim.api.nvim_set_hl(0, 'SnacksPickerDir', { fg = palette.subtle })
@@ -464,6 +468,44 @@ do
   -- cursor location to LINE:COLUMN
   ---@diagnostic disable-next-line: duplicate-set-field
   statusline.section_location = function() return '%2l:%-2v' end
+
+  -- A restrained editor surface in both RGB and ANSI terminals. The explicit
+  -- ANSI colors prevent Apple Terminal from falling back to cyan and green.
+  local function highlight(name, options) vim.api.nvim_set_hl(0, name, options) end
+
+  highlight('Normal', { fg = palette.text, bg = palette.base, ctermfg = 7, ctermbg = 0 })
+  highlight('NormalNC', { fg = palette.text, bg = palette.base, ctermfg = 7, ctermbg = 0 })
+  highlight('LineNr', { fg = palette.muted, bg = palette.base, ctermfg = 8, ctermbg = 0 })
+  highlight('CursorLineNr', { fg = palette.text, bg = palette.base, ctermfg = 7, ctermbg = 0, bold = true })
+  highlight('SignColumn', { bg = palette.base, ctermbg = 0 })
+  highlight('FoldColumn', { fg = palette.muted, bg = palette.base, ctermfg = 8, ctermbg = 0 })
+  highlight('CursorLine', { bg = palette.highlight_low, ctermbg = 8 })
+  highlight('EndOfBuffer', { fg = palette.base, bg = palette.base, ctermfg = 0, ctermbg = 0 })
+  highlight('NonText', { fg = palette.muted, ctermfg = 8 })
+  highlight('Whitespace', { fg = palette.muted, ctermfg = 8 })
+  highlight('SpecialKey', { fg = palette.muted, ctermfg = 8 })
+  highlight('Visual', { bg = palette.highlight_med, ctermbg = 8 })
+  highlight('Search', { fg = palette.base, bg = palette.gold, ctermfg = 0, ctermbg = 3 })
+  highlight('IncSearch', { fg = palette.base, bg = palette.rose, ctermfg = 0, ctermbg = 6 })
+  highlight('Pmenu', { fg = palette.text, bg = palette.surface, ctermfg = 7, ctermbg = 8 })
+  highlight('PmenuSel', { fg = palette.base, bg = palette.foam, ctermfg = 0, ctermbg = 4 })
+  highlight('PmenuSbar', { bg = palette.overlay, ctermbg = 8 })
+  highlight('PmenuThumb', { bg = palette.subtle, ctermbg = 7 })
+  highlight('NormalFloat', { fg = palette.text, bg = palette.surface, ctermfg = 7, ctermbg = 8 })
+  highlight('FloatBorder', { fg = palette.muted, bg = palette.surface, ctermfg = 8, ctermbg = 8 })
+  highlight('WinSeparator', { fg = palette.overlay, bg = palette.base, ctermfg = 8, ctermbg = 0 })
+  highlight('StatusLine', { fg = palette.subtle, bg = palette.surface, ctermfg = 7, ctermbg = 8 })
+  highlight('StatusLineNC', { fg = palette.muted, bg = palette.base, ctermfg = 8, ctermbg = 0 })
+  highlight('MiniStatuslineModeNormal', { fg = palette.text, bg = palette.overlay, ctermfg = 7, ctermbg = 8, bold = true })
+  highlight('MiniStatuslineModeInsert', { fg = palette.base, bg = palette.foam, ctermfg = 0, ctermbg = 4, bold = true })
+  highlight('MiniStatuslineModeVisual', { fg = palette.base, bg = palette.iris, ctermfg = 0, ctermbg = 5, bold = true })
+  highlight('MiniStatuslineModeReplace', { fg = palette.base, bg = palette.love, ctermfg = 0, ctermbg = 1, bold = true })
+  highlight('MiniStatuslineModeCommand', { fg = palette.base, bg = palette.gold, ctermfg = 0, ctermbg = 3, bold = true })
+  highlight('MiniStatuslineModeOther', { fg = palette.text, bg = palette.overlay, ctermfg = 7, ctermbg = 8, bold = true })
+  highlight('MiniStatuslineDevinfo', { fg = palette.muted, bg = palette.surface, ctermfg = 8, ctermbg = 8 })
+  highlight('MiniStatuslineFilename', { fg = palette.text, bg = palette.surface, ctermfg = 7, ctermbg = 8 })
+  highlight('MiniStatuslineFileinfo', { fg = palette.subtle, bg = palette.surface, ctermfg = 7, ctermbg = 8 })
+  highlight('MiniStatuslineInactive', { fg = palette.muted, bg = palette.base, ctermfg = 8, ctermbg = 0 })
 
   -- ... and there is more!
   --  Check out: https://github.com/nvim-mini/mini.nvim
